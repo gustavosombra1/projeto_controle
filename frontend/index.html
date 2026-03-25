@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Fardamentos Popular Atacarejo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Controle de Fardamentos Popular Atacarejo</h1>
+
+<div id="resumo"></div>
+
+<div class="card">
+<select id="tipo"></select>
+<select id="tamanho"></select>
+<input type="number" id="qtd" placeholder="Qtd">
+<select id="acao">
+<option value="add">Adicionar</option>
+<option value="remove">Retirar</option>
+</select>
+<button onclick="movimentar()">Salvar</button>
+</div>
+
+<h2>Histórico</h2>
+<div id="historico"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Movimentacao {
+  id         Int      @id @default(autoincrement())
+  item       String
+  tamanho    String
+  quantidade Int
+  acao       String
+  data       DateTime @default(now())
+}

@@ -1,0 +1,48 @@
+{
+
+  "name": "controle-fardamentos",
+
+  "version": "1.0.0",
+
+  "type": "module",
+
+  "main": "server.js",
+
+  "dependencies": {
+
+    "@prisma/client": "^7.5.0",
+
+    "cors": "^2.8.6",
+
+    "express": "^4.22.1",
+
+    "mongoose": "^8.0.0",
+
+    "mysql2": "^3.20.0"
+
+  },
+
+  "scripts": {
+
+    "test": "echo \"Error: no test specified\" && exit 1",
+
+    "start": "node server.js"
+
+  },
+
+  "keywords": [],
+
+  "author": "",
+
+  "license": "ISC",
+
+  "description": "",
+
+  "devDependencies": {
+
+    "prisma": "^7.5.0"
+
+  }
+
+}
+
