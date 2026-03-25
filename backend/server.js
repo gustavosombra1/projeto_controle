@@ -1,93 +1,74 @@
 import express from "express"
 import cors from "cors"
 import { prisma } from "./prisma.js"
+import path from "path"
+import { fileURLToPath } from "url"
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 
-// TESTE DE VIDA DO SERVIDOR
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// SERVIR FRONTEND
+app.use(express.static(path.join(__dirname,"frontend")))
+
 app.get("/", (req,res)=>{
-  res.send("API funcionando")
+  res.sendFile(path.join(__dirname,"frontend","index.html"))
 })
 
 // ESTOQUE
 app.get("/estoque", async (req,res)=>{
+  const mov = await prisma.movimentacao.findMany()
 
-  try{
+  const estoque = {}
 
-    const mov = await prisma.movimentacao.findMany()
+  mov.forEach(m => {
 
-    const estoque = {}
+    if(!estoque[m.item])
+      estoque[m.item] = {}
 
-    mov.forEach(m => {
+    if(!estoque[m.item][m.tamanho])
+      estoque[m.item][m.tamanho] = 0
 
-      if(!estoque[m.item])
-        estoque[m.item] = {}
+    if(m.acao === "add")
+      estoque[m.item][m.tamanho] += m.quantidade
+    else
+      estoque[m.item][m.tamanho] -= m.quantidade
 
-      if(!estoque[m.item][m.tamanho])
-        estoque[m.item][m.tamanho] = 0
+  })
 
-      if(m.acao === "add")
-        estoque[m.item][m.tamanho] += m.quantidade
-      else
-        estoque[m.item][m.tamanho] -= m.quantidade
-
-    })
-
-    res.json(estoque)
-
-  }catch(err){
-    console.error(err)
-    res.status(500).send("Erro no estoque")
-  }
-
+  res.json(estoque)
 })
-
 
 // MOVIMENTAR
 app.post("/movimentar", async (req,res)=>{
 
-  try{
+  const {tipo,tamanho,qtd,acao} = req.body
 
-    const {tipo,tamanho,qtd,acao} = req.body
+  await prisma.movimentacao.create({
+    data:{
+      item:tipo,
+      tamanho,
+      quantidade:qtd,
+      acao
+    }
+  })
 
-    await prisma.movimentacao.create({
-      data:{
-        item:tipo,
-        tamanho,
-        quantidade:qtd,
-        acao
-      }
-    })
-
-    res.send("ok")
-
-  }catch(err){
-    console.error(err)
-    res.status(500).send("Erro ao movimentar")
-  }
-
+  res.send("ok")
 })
-
 
 // HISTÓRICO
 app.get("/historico", async (req,res)=>{
 
-  try{
+  const mov = await prisma.movimentacao.findMany({
+    orderBy:{data:"desc"},
+    take:50
+  })
 
-    const mov = await prisma.movimentacao.findMany({
-      orderBy:{data:"desc"},
-      take:50
-    })
-
-    res.json(mov)
-
-  }catch(err){
-    console.error(err)
-    res.status(500).send("Erro no histórico")
-  }
+  res.json(mov)
 
 })
 
