@@ -12,9 +12,9 @@ app.get("/estoque", async (req,res)=>{
 
   const mov = await prisma.movimentacao.findMany()
 
-  let estoque = {}
+  const estoque = {}
 
-  mov.forEach(m=>{
+  mov.forEach(m => {
 
     if(!estoque[m.item])
       estoque[m.item] = {}
@@ -32,7 +32,6 @@ app.get("/estoque", async (req,res)=>{
   res.json(estoque)
 
 })
-
 
 // MOVIMENTAR
 app.post("/movimentar", async (req,res)=>{
