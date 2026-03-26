@@ -13,10 +13,10 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // SERVIR FRONTEND
-app.use(express.static("teste"))
+app.use(express.static("public"))
 
 app.get("/", (req,res)=>{
-  res.sendFile("index.html",{root:"teste"})
+  res.sendFile("index.html",{root:"public"})
 })
 
 // ESTOQUE
