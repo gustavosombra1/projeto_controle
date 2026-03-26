@@ -1,79 +1,134 @@
 import express from "express"
 import cors from "cors"
-import { prisma } from "./prisma.js"
-import path from "path"
-import { fileURLToPath } from "url"
+import pkg from "pg"
+
+const { Pool } = pkg
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-// SERVIR FRONTEND
 app.use(express.static("public"))
 
-app.get("/", (req,res)=>{
-  res.sendFile("index.html",{root:"public"})
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 })
 
-// ESTOQUE
+async function iniciarBanco(){
+
+  try{
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS movimentacao (
+        id SERIAL PRIMARY KEY,
+        item TEXT,
+        tamanho TEXT,
+        quantidade INT,
+        acao TEXT,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+
+    console.log("Banco pronto")
+
+  }catch(err){
+
+    console.error("Erro ao iniciar banco:", err)
+
+  }
+
+}
+
 app.get("/estoque", async (req,res)=>{
-  const mov = await prisma.movimentacao.findMany()
 
-  const estoque = {}
+  try{
 
-  mov.forEach(m => {
+    const result = await pool.query(
+      "SELECT * FROM movimentacao"
+    )
 
-    if(!estoque[m.item])
-      estoque[m.item] = {}
+    const mov = result.rows
 
-    if(!estoque[m.item][m.tamanho])
-      estoque[m.item][m.tamanho] = 0
+    const estoque = {}
 
-    if(m.acao === "add")
-      estoque[m.item][m.tamanho] += m.quantidade
-    else
-      estoque[m.item][m.tamanho] -= m.quantidade
+    mov.forEach(m=>{
 
-  })
+      if(!estoque[m.item])
+        estoque[m.item]={}
 
-  res.json(estoque)
+      if(!estoque[m.item][m.tamanho])
+        estoque[m.item][m.tamanho]=0
+
+      if(m.acao==="add")
+        estoque[m.item][m.tamanho]+=m.quantidade
+      else
+        estoque[m.item][m.tamanho]-=m.quantidade
+
+    })
+
+    res.json(estoque)
+
+  }catch(err){
+
+    console.error(err)
+    res.status(500).json({erro:"erro no servidor"})
+
+  }
+
 })
 
-// MOVIMENTAR
 app.post("/movimentar", async (req,res)=>{
 
-  const {tipo,tamanho,qtd,acao} = req.body
+  try{
 
-  await prisma.movimentacao.create({
-    data:{
-      item:tipo,
-      tamanho,
-      quantidade:qtd,
-      acao
-    }
-  })
+    const {tipo,tamanho,qtd,acao} = req.body
 
-  res.send("ok")
+    await pool.query(
+      `INSERT INTO movimentacao
+      (item,tamanho,quantidade,acao)
+      VALUES ($1,$2,$3,$4)`,
+      [tipo,tamanho,qtd,acao]
+    )
+
+    res.send("ok")
+
+  }catch(err){
+
+    console.error(err)
+    res.status(500).send("erro")
+
+  }
+
 })
 
-// HISTÓRICO
 app.get("/historico", async (req,res)=>{
 
-  const mov = await prisma.movimentacao.findMany({
-    orderBy:{data:"desc"},
-    take:50
-  })
+  try{
 
-  res.json(mov)
+    const result = await pool.query(
+      `SELECT * FROM movimentacao
+       ORDER BY data DESC
+       LIMIT 50`
+    )
+
+    res.json(result.rows)
+
+  }catch(err){
+
+    console.error(err)
+    res.status(500).send("erro")
+
+  }
 
 })
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, ()=>{
-  console.log("Servidor rodando na porta " + PORT)
+app.listen(PORT, async ()=>{
+
+  console.log("Servidor rodando")
+
+  await iniciarBanco()
+
 })
