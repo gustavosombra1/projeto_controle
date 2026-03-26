@@ -15,9 +15,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 })
 
-async function iniciarBanco(){
+async function iniciarBanco() {
 
-  try{
+  try {
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS movimentacao (
@@ -27,12 +27,19 @@ async function iniciarBanco(){
         quantidade INT,
         acao TEXT,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
+      );
+      CREATE TABLE IF NOT EXISTS itens (
+        id SERIAL PRIMARY KEY,
+        nome TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        tamanhos TEXT[],
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `)
 
     console.log("Banco pronto")
 
-  }catch(err){
+  } catch (err) {
 
     console.error("Erro ao iniciar banco:", err)
 
@@ -40,9 +47,9 @@ async function iniciarBanco(){
 
 }
 
-app.get("/estoque", async (req,res)=>{
+app.get("/estoque", async (req, res) => {
 
-  try{
+  try {
 
     const result = await pool.query(
       "SELECT * FROM movimentacao"
@@ -52,48 +59,48 @@ app.get("/estoque", async (req,res)=>{
 
     const estoque = {}
 
-    mov.forEach(m=>{
+    mov.forEach(m => {
 
-      if(!estoque[m.item])
-        estoque[m.item]={}
+      if (!estoque[m.item])
+        estoque[m.item] = {}
 
-      if(!estoque[m.item][m.tamanho])
-        estoque[m.item][m.tamanho]=0
+      if (!estoque[m.item][m.tamanho])
+        estoque[m.item][m.tamanho] = 0
 
-      if(m.acao==="add")
-        estoque[m.item][m.tamanho]+=m.quantidade
+      if (m.acao === "add")
+        estoque[m.item][m.tamanho] += m.quantidade
       else
-        estoque[m.item][m.tamanho]-=m.quantidade
+        estoque[m.item][m.tamanho] -= m.quantidade
 
     })
 
     res.json(estoque)
 
-  }catch(err){
+  } catch (err) {
 
     console.error(err)
-    res.status(500).json({erro:"erro no servidor"})
+    res.status(500).json({ erro: "erro no servidor" })
 
   }
 
 })
 
-app.post("/movimentar", async (req,res)=>{
+app.post("/movimentar", async (req, res) => {
 
-  try{
+  try {
 
-    const {tipo,tamanho,qtd,acao} = req.body
+    const { tipo, tamanho, qtd, acao } = req.body
 
     await pool.query(
       `INSERT INTO movimentacao
       (item,tamanho,quantidade,acao)
       VALUES ($1,$2,$3,$4)`,
-      [tipo,tamanho,qtd,acao]
+      [tipo, tamanho, qtd, acao]
     )
 
     res.send("ok")
 
-  }catch(err){
+  } catch (err) {
 
     console.error(err)
     res.status(500).send("erro")
@@ -102,9 +109,9 @@ app.post("/movimentar", async (req,res)=>{
 
 })
 
-app.get("/historico", async (req,res)=>{
+app.get("/historico", async (req, res) => {
 
-  try{
+  try {
 
     const result = await pool.query(
       `SELECT * FROM movimentacao
@@ -114,7 +121,7 @@ app.get("/historico", async (req,res)=>{
 
     res.json(result.rows)
 
-  }catch(err){
+  } catch (err) {
 
     console.error(err)
     res.status(500).send("erro")
@@ -123,9 +130,33 @@ app.get("/historico", async (req,res)=>{
 
 })
 
+app.get("/itens", async (req,res)=>{
+
+  const result = await pool.query(
+    "SELECT * FROM itens ORDER BY nome"
+  )
+
+  res.json(result.rows)
+
+})
+
+app.post("/itens", async (req,res)=>{
+
+  const {nome,tipo,tamanhos} = req.body
+
+  await pool.query(
+    `INSERT INTO itens (nome,tipo,tamanhos)
+     VALUES ($1,$2,$3)`,
+    [nome,tipo,tamanhos]
+  )
+
+  res.send("ok")
+
+})
+
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, async ()=>{
+app.listen(PORT, async () => {
 
   console.log("Servidor rodando")
 

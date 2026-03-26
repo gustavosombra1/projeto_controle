@@ -1,17 +1,8 @@
 const API = ""
 
 // FARDAMENTOS
-const fardas = [
-"Camisa Social Verde",
-"Camisa Social Branca",
-"Camisa Polo Verde",
-"Camisa Polo Prevenção",
-"Camisa Gola Verde",
-"Colete Treinamento",
-"Camisa Cinza",
-"Camisa Branca",
-"Camisa Verde"
-]
+const r = await fetch("/itens")
+const itens = await r.json()
 
 // BOTAS
 const botas = [
