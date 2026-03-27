@@ -3,7 +3,8 @@ import cors from "cors"
 import pkg from "pg"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { autenticar } from "./authMiddleware.js"
+import { autenticar, autorizar } from "./authMiddleware.js"
+
 
 const { Pool } = pkg
 
@@ -150,7 +151,7 @@ app.get("/historico", async (req, res) => {
 
 })
 
-app.get("/itens", async (req,res)=>{
+app.get("/itens", autorizar("admin"), async (req,res)=>{
 
   const result = await pool.query(
     "SELECT * FROM itens ORDER BY nome"
@@ -160,7 +161,8 @@ app.get("/itens", async (req,res)=>{
 
 })
 
-app.post("/itens", async (req,res)=>{
+app.post("/itens",autenticar,
+autorizar("admin","ti","rh"), async (req,res)=>{
 
   const {nome,tipo,tamanhos} = req.body
 
@@ -174,7 +176,7 @@ app.post("/itens", async (req,res)=>{
 
 })
 
-app.post("/usuarios", autenticar, async (req,res)=>{
+app.post("/usuarios", autenticar, autorizar("admin"), async (req,res)=>{
 
  if(req.usuario.cargo !== "admin")
   return res.status(403).send("sem permissão")
@@ -237,6 +239,61 @@ app.get("/usuarios", autenticar, async (req,res)=>{
  )
 
  res.json(result.rows)
+
+})
+app.get("/dashboard",
+autenticar,
+async (req,res)=>{
+
+ const itens = await pool.query(
+ "SELECT COUNT(*) FROM itens"
+ )
+
+ const mov = await pool.query(
+ "SELECT COUNT(*) FROM movimentacao"
+ )
+
+ const users = await pool.query(
+ "SELECT COUNT(*) FROM usuarios"
+ )
+
+ res.json({
+  itens:itens.rows[0].count,
+  movimentacoes:mov.rows[0].count,
+  usuarios:users.rows[0].count
+ })
+
+})
+
+
+
+app.get("/setup", async (req,res)=>{
+
+ const existe = await pool.query(
+ "SELECT * FROM usuarios WHERE cargo='admin' LIMIT 1"
+ )
+
+ if(existe.rows.length > 0){
+
+  return res.send("Sistema já configurado")
+
+ }
+
+ const senha = await bcrypt.hash("123456",10)
+
+ await pool.query(
+ `INSERT INTO usuarios
+ (nome,email,senha,cargo)
+ VALUES ($1,$2,$3,$4)`,
+ [
+  "Administrador",
+  "admin@sistema.com",
+  senha,
+  "admin"
+ ]
+ )
+
+ res.send("Admin criado com sucesso")
 
 })
 const PORT = process.env.PORT || 3000
