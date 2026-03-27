@@ -5,13 +5,21 @@ async function carregarItens(){
   const r = await fetch(API + "/itens")
   const itens = await r.json()
 
-  let html = "<ul>"
+  let html = "<table>"
+  html += "<tr><th>Nome</th><th>Tipo</th></tr>"
 
   itens.forEach(i=>{
-    html += `<li>${i.nome}</li>`
+
+    html += `
+    <tr>
+      <td>${i.nome}</td>
+      <td>${i.tipo}</td>
+    </tr>
+    `
+
   })
 
-  html += "</ul>"
+  html += "</table>"
 
   document.getElementById("lista").innerHTML = html
 
@@ -38,6 +46,9 @@ async function salvarItem(){
     })
 
   })
+
+  document.getElementById("nome").value = ""
+  document.getElementById("tamanhos").value = ""
 
   carregarItens()
 

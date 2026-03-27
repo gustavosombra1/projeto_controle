@@ -1,31 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+
+<title>Admin</title>
+
 </head>
-
 <body>
-    <h2>Cadastrar Item</h2>
 
-    <input id="nome" placeholder="Nome do item">
+<h2>Cadastrar Item</h2>
 
-    <select id="tipo">
-        <option value="farda">Fardamento</option>
-        <option value="bota">Bota</option>
-        <option value="unico">Tamanho único</option>
-    </select>
+<input id="nome" placeholder="Nome do item">
 
-    <input id="tamanhos" placeholder="P,M,G,GG ou 34,35,36">
+<select id="tipo">
+<option value="farda">Fardamento</option>
+<option value="bota">Bota</option>
+<option value="unico">Tamanho único</option>
+</select>
 
-    <button onclick="salvarItem()">Salvar</button>
+<input id="tamanhos" placeholder="Ex: P,M,G,GG ou 34,35,36">
 
-    <hr>
+<button onclick="salvarItem()">Salvar</button>
 
-    <h3>Itens cadastrados</h3>
+<hr>
 
-    <div id="lista"></div </body>
+<h3>Itens cadastrados</h3>
 
+<div id="lista"></div>
+
+<script src="admin.js"></script>
+
+</body>
 </html>

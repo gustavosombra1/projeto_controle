@@ -35,7 +35,16 @@ async function iniciarBanco() {
         tamanhos TEXT[],
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `)
+      
+      CREATE TABLE IF NOT EXISTS itens (
+        id SERIAL PRIMARY KEY,
+        nome TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        tamanhos TEXT[],
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+
+          `)
 
     console.log("Banco pronto")
 

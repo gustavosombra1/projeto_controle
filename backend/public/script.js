@@ -1,20 +1,10 @@
 const API = ""
 
 // FARDAMENTOS
-const r = await fetch("/itens")
-const itens = await r.json()
+// const r = await fetch("/itens")
+// const itens = await r.json()
 
-// BOTAS
-const botas = [
-"Bota Branca",
-"Bota Preta com Biqueira"
-]
-
-// ITENS TAMANHO ÚNICO
-const unicos = [
-"Touca",
-"Avental"
-]
+let itens = []
 
 // TAMANHOS
 const tamanhosFarda = ["P","M","G","GG","XGG"]
@@ -24,50 +14,56 @@ const tamanhoUnico = ["U"]
 let estoque = {}
 
 async function init(){
-    await carregarEstoque()
-    preencherTipos()
-    renderEstoque()
-    carregarHistorico()
-}
 
+  await carregarItens()
+  await carregarEstoque()
+
+  preencherTipos()
+  renderEstoque()
+  carregarHistorico()
+
+}
 // PREENCHER SELECT DE ITENS
 function preencherTipos(){
 
-    const sel = document.getElementById("tipo")
-    sel.innerHTML = ""
+  const sel = document.getElementById("tipo")
+  sel.innerHTML = ""
 
-    const itens = [...fardas, ...botas, ...unicos]
+  itens.forEach(i=>{
 
-    itens.forEach(i=>{
-        sel.innerHTML += `<option value="${i}">${i}</option>`
-    })
+    sel.innerHTML += `
+      <option value="${i.nome}">
+        ${i.nome}
+      </option>
+    `
 
-    atualizarTamanhos()
+  })
+
+  atualizarTamanhos()
+
 }
 
 // ATUALIZAR TAMANHOS AUTOMATICAMENTE
 function atualizarTamanhos(){
 
-    const tipo = document.getElementById("tipo").value
-    const sel = document.getElementById("tamanho")
+  const tipo = document.getElementById("tipo").value
+  const sel = document.getElementById("tamanho")
 
-    sel.innerHTML = ""
+  sel.innerHTML = ""
 
-    let lista = []
+  const item = itens.find(i => i.nome === tipo)
 
-    if(fardas.includes(tipo)){
-        lista = tamanhosFarda
-    }
-    else if(botas.includes(tipo)){
-        lista = tamanhosBota
-    }
-    else{
-        lista = tamanhoUnico
-    }
+  if(!item) return
 
-    lista.forEach(t=>{
-        sel.innerHTML += `<option value="${t}">${t}</option>`
-    })
+  item.tamanhos.forEach(t=>{
+
+    sel.innerHTML += `
+      <option value="${t}">
+        ${t}
+      </option>
+    `
+
+  })
 
 }
 
@@ -173,5 +169,10 @@ async function carregarHistorico(){
     document.getElementById("historico").innerHTML = html
 
 }
+async function carregarItens(){
 
+  const r = await fetch(API + "/itens")
+  itens = await r.json()
+
+}
 init()
