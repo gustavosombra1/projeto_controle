@@ -5,7 +5,6 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { autenticar, autorizar } from "./authMiddleware.js"
 
-
 const { Pool } = pkg
 
 const app = express()
@@ -24,6 +23,7 @@ async function iniciarBanco() {
   try {
 
     await pool.query(`
+
       CREATE TABLE IF NOT EXISTS movimentacao (
         id SERIAL PRIMARY KEY,
         item TEXT,
@@ -32,6 +32,7 @@ async function iniciarBanco() {
         acao TEXT,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
       CREATE TABLE IF NOT EXISTS itens (
         id SERIAL PRIMARY KEY,
         nome TEXT NOT NULL,
@@ -39,24 +40,17 @@ async function iniciarBanco() {
         tamanhos TEXT[],
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-      
-      CREATE TABLE IF NOT EXISTS itens (
-        id SERIAL PRIMARY KEY,
-        nome TEXT NOT NULL,
-        tipo TEXT NOT NULL,
-        tamanhos TEXT[],
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
 
-        CREATE TABLE IF NOT EXISTS usuarios (
+      CREATE TABLE IF NOT EXISTS usuarios (
         id SERIAL PRIMARY KEY,
         nome TEXT,
         email TEXT UNIQUE,
         senha TEXT,
         cargo TEXT,
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );    
-      `)
+      );
+
+    `)
 
     console.log("Banco pronto")
 
@@ -72,9 +66,7 @@ app.get("/estoque", async (req, res) => {
 
   try {
 
-    const result = await pool.query(
-      "SELECT * FROM movimentacao"
-    )
+    const result = await pool.query("SELECT * FROM movimentacao")
 
     const mov = result.rows
 
@@ -151,7 +143,7 @@ app.get("/historico", async (req, res) => {
 
 })
 
-app.get("/itens", autorizar("admin"), async (req,res)=>{
+app.get("/itens", autenticar, autorizar("admin","ti","rh"), async (req,res)=>{
 
   const result = await pool.query(
     "SELECT * FROM itens ORDER BY nome"
@@ -161,8 +153,7 @@ app.get("/itens", autorizar("admin"), async (req,res)=>{
 
 })
 
-app.post("/itens",autenticar,
-autorizar("admin","ti","rh"), async (req,res)=>{
+app.post("/itens", autenticar, autorizar("admin","ti","rh"), async (req,res)=>{
 
   const {nome,tipo,tamanhos} = req.body
 
@@ -177,9 +168,6 @@ autorizar("admin","ti","rh"), async (req,res)=>{
 })
 
 app.post("/usuarios", autenticar, autorizar("admin"), async (req,res)=>{
-
- if(req.usuario.cargo !== "admin")
-  return res.status(403).send("sem permissão")
 
  const {nome,email,senha,cargo} = req.body
 
@@ -229,10 +217,8 @@ app.post("/login", async (req,res)=>{
  res.json({token,cargo:user.cargo})
 
 })
-app.get("/usuarios", autenticar, async (req,res)=>{
 
- if(req.usuario.cargo !== "admin")
-  return res.status(403).send("sem permissão")
+app.get("/usuarios", autenticar, autorizar("admin"), async (req,res)=>{
 
  const result = await pool.query(
   "SELECT id,nome,email,cargo FROM usuarios ORDER BY nome"
@@ -241,9 +227,8 @@ app.get("/usuarios", autenticar, async (req,res)=>{
  res.json(result.rows)
 
 })
-app.get("/dashboard",
-autenticar,
-async (req,res)=>{
+
+app.get("/dashboard", autenticar, async (req,res)=>{
 
  const itens = await pool.query(
  "SELECT COUNT(*) FROM itens"
@@ -264,8 +249,6 @@ async (req,res)=>{
  })
 
 })
-
-
 
 app.get("/setup", async (req,res)=>{
 
@@ -296,12 +279,17 @@ app.get("/setup", async (req,res)=>{
  res.send("Admin criado com sucesso")
 
 })
+
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, async () => {
-
-  console.log("Servidor rodando")
+async function iniciarServidor(){
 
   await iniciarBanco()
 
-})
+  app.listen(PORT, () => {
+    console.log("Servidor rodando")
+  })
+
+}
+
+iniciarServidor()
