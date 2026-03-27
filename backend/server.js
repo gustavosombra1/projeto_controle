@@ -3,6 +3,7 @@ import cors from "cors"
 import pkg from "pg"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import { autenticar } from "./authMiddleware.js"
 
 const { Pool } = pkg
 
