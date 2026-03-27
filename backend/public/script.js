@@ -89,24 +89,34 @@ async function carregarEstoque(){
 // MOSTRAR RESUMO DO ESTOQUE
 function renderEstoque(){
 
-    let html = "<table>"
-    html += "<tr><th>Item</th><th>Total</th></tr>"
+let html = `
+<table class="table table-striped table-hover">
 
-    for(let item in estoque){
+<thead class="table-dark">
+<tr>
+<th>Item</th>
+<th>Total</th>
+</tr>
+</thead>
 
-        let total = Object.values(estoque[item]).reduce((a,b)=>a+b,0)
+<tbody>
+`
 
-        html += `
-        <tr>
-            <td>${item}</td>
-            <td>${total}</td>
-        </tr>
-        `
-    }
+for(let item in estoque){
 
-    html += "</table>"
+let total = Object.values(estoque[item]).reduce((a,b)=>a+b,0)
 
-    document.getElementById("resumo").innerHTML = html
+html += `
+<tr>
+<td>${item}</td>
+<td><span class="badge bg-primary">${total}</span></td>
+</tr>
+`
+}
+
+html += "</tbody></table>"
+
+document.getElementById("resumo").innerHTML = html
 
 }
 
