@@ -227,6 +227,18 @@ app.post("/login", async (req,res)=>{
  res.json({token,cargo:user.cargo})
 
 })
+app.get("/usuarios", autenticar, async (req,res)=>{
+
+ if(req.usuario.cargo !== "admin")
+  return res.status(403).send("sem permissão")
+
+ const result = await pool.query(
+  "SELECT id,nome,email,cargo FROM usuarios ORDER BY nome"
+ )
+
+ res.json(result.rows)
+
+})
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, async () => {
