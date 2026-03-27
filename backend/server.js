@@ -1,6 +1,8 @@
 import express from "express"
 import cors from "cors"
 import pkg from "pg"
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 
 const { Pool } = pkg
 
@@ -44,7 +46,15 @@ async function iniciarBanco() {
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
 
-          `)
+        CREATE TABLE IF NOT EXISTS usuarios (
+        id SERIAL PRIMARY KEY,
+        nome TEXT,
+        email TEXT UNIQUE,
+        senha TEXT,
+        cargo TEXT,
+        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );    
+      `)
 
     console.log("Banco pronto")
 
@@ -163,6 +173,59 @@ app.post("/itens", async (req,res)=>{
 
 })
 
+app.post("/usuarios", autenticar, async (req,res)=>{
+
+ if(req.usuario.cargo !== "admin")
+  return res.status(403).send("sem permissão")
+
+ const {nome,email,senha,cargo} = req.body
+
+ const hash = await bcrypt.hash(senha,10)
+
+ await pool.query(
+ `INSERT INTO usuarios
+ (nome,email,senha,cargo)
+ VALUES ($1,$2,$3,$4)`,
+ [nome,email,hash,cargo]
+ )
+
+ res.send("ok")
+
+})
+
+app.post("/login", async (req,res)=>{
+
+ const {email,senha} = req.body
+
+ const result = await pool.query(
+  "SELECT * FROM usuarios WHERE email=$1",
+  [email]
+ )
+
+ const user = result.rows[0]
+
+ if(!user)
+  return res.status(401).send("usuário inválido")
+
+ const ok = await bcrypt.compare(
+  senha,
+  user.senha
+ )
+
+ if(!ok)
+  return res.status(401).send("senha inválida")
+
+ const token = jwt.sign({
+
+  id:user.id,
+  cargo:user.cargo,
+  email:user.email
+
+ },process.env.JWT_SECRET || "segredo",{expiresIn:"8h"})
+
+ res.json({token,cargo:user.cargo})
+
+})
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, async () => {
